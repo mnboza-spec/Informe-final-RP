@@ -201,9 +201,22 @@ const app = {
         document.getElementById('aiModalOverlay').style.display = 'none';
     },
 
+    readSupportFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('aiSupportText').value = e.target.result;
+        };
+        reader.readAsText(file);
+    },
+
     async runAiAnalysis() {
         const apiKey = document.getElementById('openaiApiKey').value.trim();
+        const contextText = document.getElementById('aiProjectContext').value.trim();
+        const supportText = document.getElementById('aiSupportText').value.trim();
         const statusEl = document.getElementById('aiStatus');
+        
         if (!apiKey) {
             statusEl.textContent = "Por favor ingrese la API Key.";
             statusEl.style.color = "red";
@@ -215,12 +228,7 @@ const app = {
         document.getElementById('btnRunAi').disabled = true;
 
         try {
-            // 1. Recopilar descripción
-            const equipo = document.querySelector('[name="desc_equipo"]').value;
-            const objetivo = document.querySelector('[name="desc_objetivo"]').value;
-            const detalle = document.querySelector('[name="desc_detallada"]').value;
-            
-            // 2. Recopilar imágenes Base64
+            // Recopilar imágenes Base64
             const photoContent = [];
             document.querySelectorAll('.photo-preview').forEach(img => {
                 const b64 = img.getAttribute('data-base64');
@@ -232,22 +240,22 @@ const app = {
                 }
             });
 
-            if(photoContent.length === 0 && !detalle) {
-                throw new Error("No hay fotos ni descripción para analizar.");
-            }
+            const systemPrompt = `Eres un experto ingeniero de mantenimiento. Genera el contenido para un Informe de Servicio de Mantenimiento.
+Contexto General del Servicio:
+${contextText || 'No provisto'}
 
-            const systemPrompt = `Eres un experto ingeniero de mantenimiento. Analiza las imágenes proporcionadas y la siguiente descripción del servicio:
-Equipo: ${equipo}
-Objetivo: ${objetivo}
-Detalle: ${detalle}
+Información de Apoyo / Archivos extra:
+${supportText || 'No provisto'}
 
-Debes proporcionar una respuesta ESTRICTAMENTE en formato JSON con la siguiente estructura:
+Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver un JSON con esta estructura exacta para autocompletar el informe (puedes dejar vacío lo que no aplique):
 {
-  "dev_antes": "Texto para situación inicial",
-  "dev_durante": "Texto para ejecución del servicio",
-  "dev_despues": "Texto para resultado final",
-  "recomendaciones": "Texto de recomendaciones con viñetas",
-  "conclusiones": "Texto de conclusiones"
+  "dev_antes": "Texto detallado para situación inicial",
+  "dev_durante": "Texto detallado para ejecución del servicio",
+  "dev_despues": "Texto detallado para resultado final",
+  "recomendaciones": "- Viñeta 1\\n- Viñeta 2",
+  "conclusiones": "- Conclusión 1\\n- Conclusión 2",
+  "desc_objetivo": "Objetivo sugerido del servicio",
+  "desc_detallada": "Descripción detallada sugerida"
 }`;
 
             statusEl.textContent = "Enviando análisis a OpenAI (gpt-4o)... por favor espere.";
@@ -257,12 +265,12 @@ Debes proporcionar una respuesta ESTRICTAMENTE en formato JSON con la siguiente 
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: [
-                        { type: "text", text: "Analiza el reporte y genera el JSON solicitado." },
+                        { type: "text", text: "Por favor genera el informe en JSON." },
                         ...photoContent
                     ]}
                 ],
                 response_format: { type: "json_object" },
-                max_tokens: 1500
+                max_tokens: 2000
             };
 
             const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -288,6 +296,11 @@ Debes proporcionar una respuesta ESTRICTAMENTE en formato JSON con la siguiente 
             if(aiData.dev_despues) document.querySelector('[name="dev_despues"]').value = aiData.dev_despues;
             if(aiData.recomendaciones) document.querySelector('[name="recomendaciones"]').value = aiData.recomendaciones;
             if(aiData.conclusiones) document.querySelector('[name="conclusiones"]').value = aiData.conclusiones;
+            
+            if(aiData.desc_objetivo && !document.querySelector('[name="desc_objetivo"]').value) 
+                document.querySelector('[name="desc_objetivo"]').value = aiData.desc_objetivo;
+            if(aiData.desc_detallada && !document.querySelector('[name="desc_detallada"]').value) 
+                document.querySelector('[name="desc_detallada"]').value = aiData.desc_detallada;
 
             statusEl.textContent = "¡Análisis completado! Campos autocompletados con éxito.";
             statusEl.style.color = "green";
@@ -301,6 +314,32 @@ Debes proporcionar una respuesta ESTRICTAMENTE en formato JSON con la siguiente 
         } finally {
             document.getElementById('btnRunAi').disabled = false;
         }
+    },
+
+    // --- VISTA PREVIA ---
+    previewReport() {
+        // La vista previa puede simular el documento final activando el cuadro de impresión
+        // o si es necesario, simplemente podemos llamar window.print() ya que muestra vista previa.
+        // Pero para diferenciarlo, vamos a ocultar la UI para revisar la pantalla.
+        alert("Modo Vista Previa: Use CTRL+P para imprimir, o revise el documento en limpio.");
+        window.scrollTo(0,0);
+        document.body.classList.add('preview-mode');
+        
+        // Agregar botón flotante para salir de vista previa
+        let btn = document.getElementById('exitPreviewBtn');
+        if(!btn) {
+            btn = document.createElement('button');
+            btn.id = 'exitPreviewBtn';
+            btn.innerHTML = 'Salir de Vista Previa';
+            btn.className = 'btn btn-danger';
+            btn.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+            btn.onclick = () => {
+                document.body.classList.remove('preview-mode');
+                btn.style.display = 'none';
+            };
+            document.body.appendChild(btn);
+        }
+        btn.style.display = 'block';
     },
 
     // --- GUARDAR Y ABRIR JSON ---

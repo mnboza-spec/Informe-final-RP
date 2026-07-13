@@ -166,15 +166,18 @@ textarea { resize: vertical; min-height: 70px; }
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     .span-2, .span-3, .span-4 { grid-column: span 1; }
     .accreditation-grid { grid-template-columns: 1fr; }
-    .toolbar-actions { width: 100%; overflow-x: auto; padding-bottom: 6px; }
-    .hide-mobile { display: none; }
-    .btn { padding: 8px; }
-    body { padding-top: 100px; } /* more space if toolbar wraps */
-    .toolbar { height: auto; min-height: 64px; flex-direction: column; padding: 10px 0;}
-    .toolbar-brand { margin-bottom: 8px; }
+    
+    .toolbar { height: auto; flex-direction: column; padding: 10px 0;}
+    .toolbar-brand { margin-bottom: 8px; width: 100%; justify-content: center; }
+    .toolbar-actions { width: 100%; overflow-x: auto; padding-bottom: 8px; justify-content: flex-start; scrollbar-width: none; }
+    .toolbar-actions::-webkit-scrollbar { display: none; }
+    
+    .btn span { display: inline; } /* Always show text on mobile as requested */
+    .btn { padding: 8px 14px; flex-shrink: 0; font-size: 14px;}
+    body { padding-top: 110px; } /* more space for wrapped toolbar */
 }
 
-/* --- PRINT STYLES --- */
+/* --- PRINT & PREVIEW STYLES --- */
 @media print {
     @page { size: A4; margin: 1.5cm; }
     body { padding: 0; background: white; }
@@ -189,3 +192,28 @@ textarea { resize: vertical; min-height: 70px; }
     .signature-box { border: none; border-bottom: 1px solid black; border-radius: 0; background: transparent; }
     .readonly-input { background: transparent !important; color: black !important; }
 }
+
+body.preview-mode {
+    padding: 0; background: white;
+}
+body.preview-mode .toolbar, 
+body.preview-mode .no-print, 
+body.preview-mode .btn-ai-float, 
+body.preview-mode .modal, 
+body.preview-mode .modal-overlay { 
+    display: none !important; 
+}
+body.preview-mode .document-container { 
+    box-shadow: none; padding: 20px; max-width: 1000px; margin: 0 auto; 
+}
+body.preview-mode input, 
+body.preview-mode select, 
+body.preview-mode textarea { 
+    border: none !important; background: transparent !important; padding: 2px 0 !important; color: black !important; pointer-events: none;
+}
+body.preview-mode input::placeholder, 
+body.preview-mode textarea::placeholder { color: transparent; }
+body.preview-mode .dynamic-table th { background-color: #f1f5f9 !important; }
+body.preview-mode .photo-upload-area { border: 1px solid var(--border) !important; background: white !important; }
+body.preview-mode .signature-box { border: none; border-bottom: 1px solid black; border-radius: 0; background: transparent; }
+body.preview-mode .readonly-input { background: transparent !important; color: black !important; }

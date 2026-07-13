@@ -19,43 +19,60 @@
             <div class="toolbar-actions">
                 <button type="button" class="btn btn-secondary" onclick="app.resetForm()" title="Restablecer">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    <span class="hide-mobile">Restablecer</span>
+                    <span>Restablecer</span>
                 </button>
-                <label class="btn btn-secondary file-upload-btn" title="Abrir">
+                <label class="btn btn-secondary file-upload-btn" title="Abrir Archivo">
                     <input type="file" id="fileInput" accept=".json" onchange="app.openFile(event)" hidden>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span class="hide-mobile">Abrir</span>
+                    <span>Abrir Archivo</span>
                 </label>
-                <button type="button" class="btn btn-secondary" onclick="app.saveFile()" title="Guardar">
+                <button type="button" class="btn btn-secondary" onclick="app.saveFile()" title="Guardar Archivo">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    <span class="hide-mobile">Guardar JSON</span>
+                    <span>Guardar Archivo</span>
                 </button>
-                <button type="button" class="btn btn-primary" onclick="window.print()" title="PDF">
+                <button type="button" class="btn btn-primary" onclick="app.previewReport()" title="Vista Previa">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Vista Previa</span>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="window.print()" title="Imprimir PDF">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    <span class="hide-mobile">PDF / Previa</span>
+                    <span>Imprimir PDF</span>
                 </button>
                 <button type="button" class="btn btn-primary" onclick="app.exportWord()" style="background-color: #2b579a;" title="Exportar Word">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.602-1.43l-4.44-4.342A2 2 0 0 0 14.53 2H6a2 2 0 0 0-2 2z"/><path d="M9 13l2 4 2-4"/></svg>
-                    <span class="hide-mobile">Exportar Word</span>
+                    <span>Exportar Word</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- AI ASSISTANT MODAL -->
-    <div id="aiModal" class="modal no-print">
+    <div id="aiModal" class="modal no-print" style="max-width: 500px;">
         <div class="modal-content">
-            <h3>Asistente IA (OpenAI)</h3>
-            <p>La IA analizará las fotografías y la descripción del servicio para sugerir texto para la bitácora y recomendaciones.</p>
+            <h3>Asistente IA para Completar Informe</h3>
+            <p>La IA analizará el contexto del proyecto, cualquier archivo de apoyo (texto) que proporcione y las fotografías para redactar todo el informe (Actividades, Materiales, Bitácora, etc.).</p>
+            
+            <div class="input-group mt-2">
+                <label>Descripción General / Contexto del Servicio</label>
+                <textarea id="aiProjectContext" rows="3" placeholder="Explique brevemente de qué trata este servicio de mantenimiento para darle contexto a la IA..."></textarea>
+            </div>
+            
+            <div class="input-group mt-2">
+                <label>Archivo de apoyo (TXT, CSV, o Pegar texto)</label>
+                <input type="file" id="aiSupportFile" accept=".txt,.csv,.json" onchange="app.readSupportFile(event)">
+                <textarea id="aiSupportText" rows="2" placeholder="O pegue el contenido del texto de apoyo aquí..." style="margin-top:4px;"></textarea>
+            </div>
+
             <div class="input-group mt-2">
                 <label>OpenAI API Key</label>
                 <input type="password" id="openaiApiKey" placeholder="sk-...">
             </div>
+            
             <div class="mt-2 text-right">
                 <button type="button" class="btn btn-secondary" onclick="app.closeAiModal()">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnRunAi" onclick="app.runAiAnalysis()">Analizar y Autocompletar</button>
+                <button type="button" class="btn btn-primary" id="btnRunAi" onclick="app.runAiAnalysis()">Generar Informe Completo</button>
             </div>
-            <p id="aiStatus" class="mt-2" style="font-size: 12px; color: var(--secondary);"></p>
+            <p id="aiStatus" class="mt-2" style="font-size: 13px; color: var(--secondary); font-weight: 500;"></p>
         </div>
     </div>
     <div id="aiModalOverlay" class="modal-overlay no-print" onclick="app.closeAiModal()"></div>
