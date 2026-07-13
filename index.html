@@ -6,6 +6,8 @@
     <title>Informe de Servicio de Mantenimiento</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- PDF.js para extraer texto de PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
 
@@ -58,8 +60,11 @@
             </div>
             
             <div class="input-group mt-2">
-                <label>Archivo de apoyo (TXT, CSV, o Pegar texto)</label>
-                <input type="file" id="aiSupportFile" accept=".txt,.csv,.json" onchange="app.readSupportFile(event)">
+                <label>Archivo de apoyo (Foto, PDF, TXT, CSV, o Pegar texto)</label>
+                <input type="file" id="aiSupportFile" accept=".txt,.csv,.json,image/*,.pdf" onchange="app.readSupportFile(event)">
+                <div id="aiSupportImagePreviewContainer" style="display:none; margin-top:10px;">
+                    <img id="aiSupportImagePreview" class="photo-preview" src="" alt="Previsualización apoyo" style="max-width:100%; max-height:200px; border-radius:4px; object-fit:contain;">
+                </div>
                 <textarea id="aiSupportText" rows="2" placeholder="O pegue el contenido del texto de apoyo aquí..." style="margin-top:4px;"></textarea>
             </div>
 

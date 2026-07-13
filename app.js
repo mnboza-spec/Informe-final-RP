@@ -204,11 +204,53 @@ const app = {
     readSupportFile(event) {
         const file = event.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('aiSupportText').value = e.target.result;
-        };
-        reader.readAsText(file);
+        
+        const previewImg = document.getElementById('aiSupportImagePreview');
+        const previewContainer = document.getElementById('aiSupportImagePreviewContainer');
+        const textArea = document.getElementById('aiSupportText');
+
+        // Reiniciar
+        previewContainer.style.display = 'none';
+        previewImg.removeAttribute('data-base64');
+        previewImg.src = '';
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewImg.setAttribute('data-base64', e.target.result);
+                previewContainer.style.display = 'block';
+                textArea.placeholder = "Opcional: Añada más detalles de texto aquí...";
+            };
+            reader.readAsDataURL(file);
+        } else if (file.type === 'application/pdf') {
+            textArea.value = "Extrayendo texto del PDF... por favor espere.";
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const typedarray = new Uint8Array(e.target.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        fullText += pageText + '\n\n';
+                    }
+                    textArea.value = fullText.trim();
+                } catch (err) {
+                    console.error(err);
+                    textArea.value = "Error al extraer texto del PDF. Por favor péguelo manualmente.";
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                textArea.value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
     },
 
     async runAiAnalysis() {
