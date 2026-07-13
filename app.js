@@ -191,15 +191,6 @@ const app = {
     },
 
     // --- INTEGRACIÓN OPENAI ---
-    openAiModal() {
-        document.getElementById('aiModal').style.display = 'block';
-        document.getElementById('aiModalOverlay').style.display = 'block';
-    },
-
-    closeAiModal() {
-        document.getElementById('aiModal').style.display = 'none';
-        document.getElementById('aiModalOverlay').style.display = 'none';
-    },
 
     readSupportFile(event) {
         const file = event.target.files[0];
@@ -346,8 +337,6 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
 
             statusEl.textContent = "¡Análisis completado! Campos autocompletados con éxito.";
             statusEl.style.color = "green";
-
-            setTimeout(() => this.closeAiModal(), 2000);
 
         } catch(err) {
             console.error(err);
