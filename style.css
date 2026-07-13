@@ -185,6 +185,8 @@ textarea { resize: vertical; min-height: 70px; }
     input::placeholder, textarea::placeholder { color: transparent; }
     .doc-section { margin-bottom: 20px; page-break-inside: avoid; }
     .page-break-before { page-break-before: always; }
+    table, tr, td, th { page-break-inside: avoid; }
+    .photo-card { page-break-inside: avoid; }
     .dynamic-table th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .photo-upload-area { border: 1px solid var(--border) !important; background: white !important; }
     .signature-box { border: none; border-bottom: 1px solid black; border-radius: 0; background: transparent; }

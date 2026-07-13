@@ -360,6 +360,7 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
   "conclusiones": "- Conclusión 1\\n- Conclusión 2",
   "desc_objetivo": "Objetivo sugerido del servicio",
   "desc_detallada": "Descripción detallada sugerida",
+  "leyendas_fotos": ["Descripción muy breve de la foto 1", "Descripción muy breve de la foto 2"],
   "actividades": [
     { "act_desc": "Descripción actividad", "act_resp": "Responsable", "act_inicio": "08:00", "act_fin": "10:00", "act_duracion": "02:00" }
   ],
@@ -429,6 +430,14 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
             }
             if(aiData.observaciones && aiData.observaciones.length > 0) {
                 app.loadTableData('#observationsTable', aiData.observaciones, app.addObservationRow.bind(app));
+            }
+            if(aiData.leyendas_fotos && Array.isArray(aiData.leyendas_fotos)) {
+                const textareas = document.querySelectorAll('.photo-card textarea[name^="photo_desc_"]');
+                aiData.leyendas_fotos.forEach((desc, index) => {
+                    if(textareas[index]) {
+                        textareas[index].value = desc;
+                    }
+                });
             }
 
             statusEl.textContent = "¡Análisis completado! Campos autocompletados con éxito.";
@@ -633,18 +642,38 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
         const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
             "xmlns:w='urn:schemas-microsoft-com:office:word' " +
             "xmlns='http://www.w3.org/TR/REC-html40'>" +
-            "<head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title>" +
+            "<head><meta charset='utf-8'><title>Informe de Mantenimiento</title>" +
             "<style>" +
-            "body { font-family: Arial, sans-serif; }" +
-            "table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }" +
-            "th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }" +
-            "h1, h2, h3 { color: #2563EB; }" +
-            ".no-print { display: none; }" +
+            "body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #0F172A; }" +
+            "table { border-collapse: collapse; width: 100%; margin-bottom: 20px; page-break-inside: auto; }" +
+            "tr { page-break-inside: avoid; page-break-after: auto; }" +
+            "th, td { border: 1px solid #CBD5E1; padding: 8px; text-align: left; vertical-align: top; }" +
+            "th { background-color: #F8FAFC; color: #475569; font-weight: bold; }" +
+            "h1 { font-size: 16pt; color: #2563EB; text-align: center; margin-bottom: 20px; text-transform: uppercase; }" +
+            "h2 { font-size: 13pt; color: #2563EB; border-bottom: 1px solid #2563EB; padding-bottom: 4px; page-break-after: avoid; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; }" +
+            "h3 { font-size: 11pt; color: #334155; page-break-after: avoid; margin-top: 15px; }" +
+            ".no-print { display: none !important; }" +
+            ".photo-card { page-break-inside: avoid; text-align: center; margin-bottom: 25px; padding: 10px; border: 1px solid #E2E8F0; }" +
+            ".photo-card img { max-width: 500px; max-height: 400px; display: block; margin: 0 auto 10px auto; }" +
+            ".photo-title { font-weight: bold; font-size: 12pt; display: block; margin-bottom: 5px; color: #1E293B; }" +
+            ".photo-desc { font-size: 10pt; color: #475569; font-style: italic; }" +
+            ".page-break-before { page-break-before: always; }" +
+            ".input-group { margin-bottom: 12px; }" +
+            ".input-group label { font-weight: bold; display: inline-block; width: 180px; color: #475569; font-size: 10pt; }" +
+            ".input-group span { font-size: 11pt; display: inline-block; }" +
+            ".logbook-section { margin-bottom: 15px; padding: 10px; border: 1px solid #E2E8F0; background: #F8FAFC; page-break-inside: avoid; }" +
+            ".acc-details { margin-bottom: 20px; }" +
+            ".signature-box { text-align: center; margin-top: 20px; }" +
+            ".signature-box img { max-width: 200px; max-height: 100px; }" +
             "</style></head><body>";
         const footer = "</body></html>";
         
         // Clonar el contenedor para inyectar valores de input a div de texto
         const clone = document.getElementById("maintenanceForm").cloneNode(true);
+        
+        // Remove IA Section
+        const aiSection = clone.querySelector('.doc-section[style*="background: #f0fdf4"]');
+        if (aiSection) aiSection.remove();
         
         // Convertir inputs/textareas en texto estático para Word
         const inputs = document.getElementById("maintenanceForm").querySelectorAll('input, select, textarea');
@@ -652,14 +681,27 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
         
         inputs.forEach((input, index) => {
             const cloneInput = cloneInputs[index];
+            if (!cloneInput) return;
+
             if (input.type === 'file' || input.type === 'button') {
                 cloneInput.remove();
             } else if (input.tagName === 'SELECT') {
-                const textNode = document.createTextNode(input.options[input.selectedIndex]?.text || '');
-                cloneInput.parentNode.replaceChild(textNode, cloneInput);
+                const text = input.options[input.selectedIndex]?.text || '';
+                const span = document.createElement('span');
+                span.innerText = text;
+                cloneInput.parentNode.replaceChild(span, cloneInput);
+            } else if (input.tagName === 'TEXTAREA') {
+                const div = document.createElement('div');
+                div.innerHTML = (input.value || '').replace(/\n/g, '<br>');
+                if (input.name.startsWith('photo_desc_')) {
+                    div.className = 'photo-desc';
+                }
+                cloneInput.parentNode.replaceChild(div, cloneInput);
             } else {
-                const textNode = document.createTextNode(input.value || '');
-                cloneInput.parentNode.replaceChild(textNode, cloneInput);
+                const span = document.createElement('span');
+                span.innerText = input.value || '';
+                if(input.classList.contains('photo-title')) span.className = 'photo-title';
+                cloneInput.parentNode.replaceChild(span, cloneInput);
             }
         });
 
@@ -667,7 +709,11 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
         clone.querySelectorAll('img').forEach(img => {
             if(img.src.startsWith('data:image')) {
                 img.style.maxWidth = '500px';
+                img.style.maxHeight = '400px';
+                img.style.width = 'auto';
                 img.style.height = 'auto';
+            } else if(img.id === 'companyLogo') {
+                img.style.maxHeight = '80px';
             } else {
                 img.remove(); // Quitar placeholder vacíos
             }
