@@ -367,7 +367,7 @@
                 <div class="acc-details">
                     <div class="input-group">
                         <label>Empresa (Proveedor)</label>
-                        <input type="text" name="acc_empresa" placeholder="Nombre proveedor">
+                        <input type="text" name="acc_empresa" value="Gemsa Corporacion Sac" placeholder="Nombre proveedor">
                     </div>
                     <div class="input-group">
                         <label>Nombre del Responsable</label>
@@ -375,20 +375,20 @@
                     </div>
                     <div class="input-group">
                         <label>Cargo</label>
-                        <input type="text" name="acc_cargo" placeholder="Cargo del responsable">
+                        <input type="text" name="acc_cargo" value="Asistente de Mantenimiento" placeholder="Cargo del responsable">
                     </div>
                     <div class="input-group">
-                        <label>Fecha de Firma</label>
+                        <label>Fecha</label>
                         <input type="date" name="acc_fecha">
                     </div>
                 </div>
                 <div class="acc-signature">
-                    <label>Firma / Sello</label>
+                    <label>Firma</label>
                     <div class="signature-box" id="signatureArea" onclick="document.getElementById('signatureInput').click()">
                         <span class="upload-icon no-print">Click para adjuntar firma (PNG/JPG)</span>
-                        <img id="signaturePreview" class="photo-preview" src="" alt="Firma" style="display:none;">
+                        <img id="signaturePreview" class="photo-preview" src="firma.png" alt="Firma" style="display:block;" onerror="this.style.display='none'">
                     </div>
-                    <input type="file" id="signatureInput" accept="image/*" class="no-print hidden-input" onchange="app.handleImageUpload(event, 'signature')">
+                    <input type="file" id="signatureInput" accept="image/*" class="no-print hidden-input" onchange="app.handleImageUpload(event, 'signaturePreview')">
                 </div>
             </div>
         </section>

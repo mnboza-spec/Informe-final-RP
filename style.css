@@ -177,8 +177,8 @@ textarea { resize: vertical; min-height: 70px; }
 
 /* --- PRINT & PREVIEW STYLES --- */
 @media print {
-    @page { size: A4; margin: 1.5cm; }
-    body { padding: 0; background: white; }
+    @page { size: A4; margin: 0; }
+    body { padding: 1.5cm; background: white; }
     .toolbar, .no-print, .modal, .modal-overlay { display: none !important; }
     .document-container { box-shadow: none; padding: 0; max-width: none; margin: 0; }
     input, select, textarea { border: none !important; background: transparent !important; padding: 2px 0 !important; color: black !important; }
