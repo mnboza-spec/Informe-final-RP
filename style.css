@@ -158,14 +158,21 @@ textarea { resize: vertical; min-height: 70px; }
     .span-2, .span-3, .span-4 { grid-column: span 1; }
     .accreditation-grid { grid-template-columns: 1fr; }
     
-    .toolbar { height: auto; flex-direction: column; padding: 10px 0;}
-    .toolbar-brand { margin-bottom: 8px; width: 100%; justify-content: center; }
-    .toolbar-actions { width: 100%; overflow-x: auto; padding-bottom: 8px; justify-content: flex-start; scrollbar-width: none; }
-    .toolbar-actions::-webkit-scrollbar { display: none; }
+    .toolbar { height: auto; padding: 10px 0;}
+    .toolbar-container { flex-direction: column; gap: 10px; }
+    .toolbar-brand { width: 100%; justify-content: center; margin-bottom: 4px; }
+    .toolbar-actions { 
+        width: 100%; 
+        overflow-x: visible; 
+        flex-wrap: wrap; 
+        justify-content: center; 
+        padding-bottom: 0;
+        gap: 6px;
+    }
     
     .btn span { display: inline; } /* Always show text on mobile as requested */
-    .btn { padding: 8px 14px; flex-shrink: 0; font-size: 14px;}
-    body { padding-top: 110px; } /* more space for wrapped toolbar */
+    .btn { padding: 8px 12px; flex-shrink: 0; font-size: 13px;}
+    body { padding-top: 180px; } /* more space for wrapped toolbar */
 }
 
 /* --- PRINT & PREVIEW STYLES --- */
