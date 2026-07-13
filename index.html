@@ -101,9 +101,8 @@
                 
                 <div class="input-group">
                     <label style="color: #166534;">Archivo de apoyo (Foto, PDF, TXT, CSV)</label>
-                    <input type="file" id="aiSupportFile" accept=".txt,.csv,.json,image/*,.pdf" onchange="app.readSupportFile(event)">
-                    <div id="aiSupportImagePreviewContainer" style="display:none; margin-top:10px;">
-                        <img id="aiSupportImagePreview" class="photo-preview" src="" alt="Previsualización apoyo" style="position:relative; width:auto; height:150px; max-width:100%; border-radius:4px; object-fit:contain;">
+                    <input type="file" id="aiSupportFile" multiple accept=".txt,.csv,.json,image/*,.pdf" onchange="app.readSupportFile(event)">
+                    <div id="aiSupportImagePreviewContainer" style="display:none; margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
                     </div>
                 </div>
                 

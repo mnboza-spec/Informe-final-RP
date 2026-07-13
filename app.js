@@ -260,55 +260,59 @@ const app = {
     },
 
     readSupportFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
         
-        const previewImg = document.getElementById('aiSupportImagePreview');
         const previewContainer = document.getElementById('aiSupportImagePreviewContainer');
         const textArea = document.getElementById('aiSupportText');
 
         // Reiniciar
-        previewContainer.style.display = 'none';
-        previewImg.removeAttribute('data-base64');
-        previewImg.src = '';
-        
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImg.src = e.target.result;
-                previewImg.setAttribute('data-base64', e.target.result);
-                previewContainer.style.display = 'block';
-                textArea.placeholder = "Opcional: Añada más detalles de texto aquí...";
-            };
-            reader.readAsDataURL(file);
-        } else if (file.type === 'application/pdf') {
-            textArea.value = "Extrayendo texto del PDF... por favor espere.";
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const typedarray = new Uint8Array(e.target.result);
-                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                    let fullText = '';
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(' ');
-                        fullText += pageText + '\n\n';
+        previewContainer.innerHTML = '';
+        previewContainer.style.display = 'flex';
+        textArea.value = '';
+
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.className = 'photo-preview';
+                    img.src = e.target.result;
+                    img.setAttribute('data-base64', e.target.result);
+                    img.style.cssText = 'position:relative; width:auto; height:150px; max-width:100%; border-radius:4px; object-fit:contain;';
+                    previewContainer.appendChild(img);
+                    textArea.placeholder = "Opcional: Añada más detalles de texto aquí...";
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                textArea.value += "\nExtrayendo texto del PDF... por favor espere.\n";
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const typedarray = new Uint8Array(e.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            fullText += pageText + '\n\n';
+                        }
+                        textArea.value = textArea.value.replace("\nExtrayendo texto del PDF... por favor espere.\n", "") + fullText.trim() + "\n";
+                    } catch (err) {
+                        console.error(err);
+                        textArea.value += "Error al extraer texto del PDF. Por favor péguelo manualmente.\n";
                     }
-                    textArea.value = fullText.trim();
-                } catch (err) {
-                    console.error(err);
-                    textArea.value = "Error al extraer texto del PDF. Por favor péguelo manualmente.";
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        } else {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                textArea.value = e.target.result;
-            };
-            reader.readAsText(file);
-        }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    textArea.value += e.target.result + "\n";
+                };
+                reader.readAsText(file);
+            }
+        });
     },
 
     async runAiAnalysis() {
@@ -355,7 +359,19 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
   "recomendaciones": "- Viñeta 1\\n- Viñeta 2",
   "conclusiones": "- Conclusión 1\\n- Conclusión 2",
   "desc_objetivo": "Objetivo sugerido del servicio",
-  "desc_detallada": "Descripción detallada sugerida"
+  "desc_detallada": "Descripción detallada sugerida",
+  "actividades": [
+    { "act_desc": "Descripción actividad", "act_resp": "Responsable", "act_inicio": "08:00", "act_fin": "10:00", "act_duracion": "02:00" }
+  ],
+  "materiales": [
+    { "mat_desc": "Nombre material", "mat_cant": "1", "mat_und": "Und", "mat_spec": "Especificación" }
+  ],
+  "activos": [
+    { "ast_codigo": "GIM-001", "ast_tipo": "Tipo", "ast_area": "Área", "ast_marca": "Marca", "ast_modelo": "Modelo", "ast_serie": "Serie", "ast_cap": "Capacidad", "ast_condicion": "Operativo" }
+  ],
+  "observaciones": [
+    { "obs_prioridad": "Baja", "obs_desc": "Descripción", "obs_accion": "Acción recomendada" }
+  ]
 }`;
 
             statusEl.textContent = "Enviando análisis a OpenAI (gpt-4o)... por favor espere.";
@@ -401,6 +417,19 @@ Analiza el contexto, los datos de apoyo y las imágenes adjuntas. Debes devolver
                 document.querySelector('[name="desc_objetivo"]').value = aiData.desc_objetivo;
             if(aiData.desc_detallada && !document.querySelector('[name="desc_detallada"]').value) 
                 document.querySelector('[name="desc_detallada"]').value = aiData.desc_detallada;
+
+            if(aiData.actividades && aiData.actividades.length > 0) {
+                app.loadTableData('#activitiesTable', aiData.actividades, app.addActivityRow.bind(app));
+            }
+            if(aiData.materiales && aiData.materiales.length > 0) {
+                app.loadTableData('#materialsTable', aiData.materiales, app.addMaterialRow.bind(app));
+            }
+            if(aiData.activos && aiData.activos.length > 0) {
+                app.loadTableData('#assetsTable', aiData.activos, app.addAssetRow.bind(app));
+            }
+            if(aiData.observaciones && aiData.observaciones.length > 0) {
+                app.loadTableData('#observationsTable', aiData.observaciones, app.addObservationRow.bind(app));
+            }
 
             statusEl.textContent = "¡Análisis completado! Campos autocompletados con éxito.";
             statusEl.style.color = "green";
