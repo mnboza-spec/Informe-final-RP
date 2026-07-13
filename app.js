@@ -192,6 +192,73 @@ const app = {
 
     // --- INTEGRACIÓN OPENAI ---
 
+    // --- DICTADO POR VOZ ---
+    toggleDictation() {
+        const btn = document.getElementById('btnDictate');
+        const textArea = document.getElementById('aiProjectContext');
+        
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert("El dictado por voz no está soportado en este navegador. Use Chrome, Edge o Safari.");
+            return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (app.recognition && app.isRecording) {
+            app.recognition.stop();
+            return;
+        }
+
+        if (!app.recognition) {
+            app.recognition = new SpeechRecognition();
+            app.recognition.lang = 'es-ES';
+            app.recognition.continuous = true;
+            app.recognition.interimResults = true;
+
+            app.recognition.onstart = function() {
+                app.isRecording = true;
+                btn.innerHTML = '🔴 Grabando... (Click para detener)';
+                btn.style.backgroundColor = '#fecaca';
+                btn.style.color = '#991b1b';
+                btn.style.borderColor = '#991b1b';
+            };
+
+            app.recognition.onresult = function(event) {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+                if (finalTranscript) {
+                    textArea.value += (textArea.value ? ' ' : '') + finalTranscript;
+                }
+            };
+
+            app.recognition.onerror = function(event) {
+                console.error("Speech recognition error", event.error);
+                app.stopDictationUI();
+            };
+
+            app.recognition.onend = function() {
+                app.stopDictationUI();
+            };
+        }
+
+        app.recognition.start();
+    },
+    
+    stopDictationUI() {
+        app.isRecording = false;
+        const btn = document.getElementById('btnDictate');
+        if (btn) {
+            btn.innerHTML = '🎤 Dictar por Voz';
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = '#166534';
+            btn.style.borderColor = '#166534';
+        }
+    },
+
     readSupportFile(event) {
         const file = event.target.files[0];
         if (!file) return;
