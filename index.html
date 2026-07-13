@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Servicio de Mantenimiento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- TOOLBAR (Controles de acción) -->
+    <div class="toolbar no-print">
+        <div class="toolbar-container">
+            <div class="toolbar-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>Informes GEMSA</span>
+            </div>
+            <div class="toolbar-actions">
+                <button type="button" class="btn btn-secondary" onclick="app.resetForm()" title="Restablecer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span class="hide-mobile">Restablecer</span>
+                </button>
+                <label class="btn btn-secondary file-upload-btn" title="Abrir">
+                    <input type="file" id="fileInput" accept=".json" onchange="app.openFile(event)" hidden>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span class="hide-mobile">Abrir</span>
+                </label>
+                <button type="button" class="btn btn-secondary" onclick="app.saveFile()" title="Guardar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span class="hide-mobile">Guardar JSON</span>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="window.print()" title="PDF">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span class="hide-mobile">PDF / Previa</span>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="app.exportWord()" style="background-color: #2b579a;" title="Exportar Word">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.602-1.43l-4.44-4.342A2 2 0 0 0 14.53 2H6a2 2 0 0 0-2 2z"/><path d="M9 13l2 4 2-4"/></svg>
+                    <span class="hide-mobile">Exportar Word</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI ASSISTANT MODAL -->
+    <div id="aiModal" class="modal no-print">
+        <div class="modal-content">
+            <h3>Asistente IA (OpenAI)</h3>
+            <p>La IA analizará las fotografías y la descripción del servicio para sugerir texto para la bitácora y recomendaciones.</p>
+            <div class="input-group mt-2">
+                <label>OpenAI API Key</label>
+                <input type="password" id="openaiApiKey" placeholder="sk-...">
+            </div>
+            <div class="mt-2 text-right">
+                <button type="button" class="btn btn-secondary" onclick="app.closeAiModal()">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnRunAi" onclick="app.runAiAnalysis()">Analizar y Autocompletar</button>
+            </div>
+            <p id="aiStatus" class="mt-2" style="font-size: 12px; color: var(--secondary);"></p>
+        </div>
+    </div>
+    <div id="aiModalOverlay" class="modal-overlay no-print" onclick="app.closeAiModal()"></div>
+
+    <!-- BOTON FLOTANTE IA -->
+    <button type="button" class="btn-ai-float no-print" onclick="app.openAiModal()" title="Asistente IA">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 7.1"/><path d="M12 12l9.9 4.9"/></svg>
+    </button>
+
+    <form id="maintenanceForm" class="document-container">
+        <!-- HEADER -->
+        <header class="doc-header">
+            <div class="doc-title-area">
+                <div class="logo-container">
+                    <img src="logo.png" alt="GEMSA Logo" id="companyLogo" onerror="this.style.display='none'">
+                </div>
+                <h1>INFORME DE SERVICIO DE MANTENIMIENTO</h1>
+                <div class="input-group" style="display:none;">
+                    <label>Empresa Proveedora</label>
+                    <input type="text" name="header_empresa" class="input-title" value="Gemsa Corporacion Sac">
+                </div>
+            </div>
+            <div class="doc-meta-area">
+                <div class="meta-field">
+                    <label>N° Informe:</label>
+                    <input type="text" name="header_num_informe" placeholder="Ej. INF-2026-001">
+                </div>
+                <div class="meta-field">
+                    <label>Fecha de Emisión:</label>
+                    <input type="date" name="header_fecha_emision">
+                </div>
+                <div class="meta-field">
+                    <label>Sede:</label>
+                    <input type="text" name="header_sede" placeholder="Sede o sucursal">
+                </div>
+            </div>
+        </header>
+
+        <!-- 1. DATOS GENERALES DE LA EMPRESA -->
+        <section class="doc-section">
+            <h2 class="section-title">1. Datos Generales de la Empresa</h2>
+            <div class="grid-container grid-3">
+                <div class="input-group span-2">
+                    <label>Razón Social</label>
+                    <input type="text" name="gen_razon_social" value="Gemsa Corporacion Sac" readonly class="readonly-input">
+                </div>
+                <div class="input-group">
+                    <label>RUC</label>
+                    <input type="text" name="gen_ruc" value="20600894839" readonly class="readonly-input">
+                </div>
+                <div class="input-group span-2">
+                    <label>Nombre Comercial</label>
+                    <input type="text" name="gen_nombre_comercial" value="Gemsa" readonly class="readonly-input">
+                </div>
+                <div class="input-group span-3">
+                    <label>Dirección</label>
+                    <input type="text" name="gen_direccion" value="Jr Caracas 2426 Jesus Maria" readonly class="readonly-input">
+                </div>
+                <div class="input-group">
+                    <label>Representante Responsable</label>
+                    <input type="text" name="gen_representante" value="Marco Boza Contreras" readonly class="readonly-input">
+                </div>
+                <div class="input-group">
+                    <label>Teléfono</label>
+                    <input type="tel" name="gen_telefono" value="956623405" readonly class="readonly-input">
+                </div>
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" name="gen_email" value="marco.boza@gemsa.pe" readonly class="readonly-input">
+                </div>
+            </div>
+        </section>
+
+        <!-- 2 y 3. TIEMPOS DEL SERVICIO -->
+        <section class="doc-section">
+            <h2 class="section-title">2 & 3. Tiempos del Servicio</h2>
+            <div class="grid-container grid-4">
+                <div class="input-group">
+                    <label>Fecha de Inicio</label>
+                    <input type="date" name="time_fecha_inicio" id="time_fecha_inicio">
+                </div>
+                <div class="input-group">
+                    <label>Hora de Inicio</label>
+                    <input type="time" name="time_hora_inicio" id="time_hora_inicio" onchange="app.calculateDurations()">
+                </div>
+                <div class="input-group">
+                    <label>Fecha de Finalización</label>
+                    <input type="date" name="time_fecha_fin" id="time_fecha_fin">
+                </div>
+                <div class="input-group">
+                    <label>Hora de Finalización</label>
+                    <input type="time" name="time_hora_fin" id="time_hora_fin" onchange="app.calculateDurations()">
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. DESCRIPCIÓN DEL SERVICIO -->
+        <section class="doc-section">
+            <h2 class="section-title">4. Descripción del Servicio</h2>
+            <div class="grid-container grid-2">
+                <div class="input-group">
+                    <label>Tipo de Mantenimiento</label>
+                    <div class="select-wrapper">
+                        <select name="desc_tipo_mantenimiento">
+                            <option value="">Seleccione...</option>
+                            <option value="Preventivo">Preventivo</option>
+                            <option value="Correctivo">Correctivo</option>
+                            <option value="Predictivo">Predictivo</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Equipo o Activo Intervenido</label>
+                    <input type="text" name="desc_equipo" placeholder="Nombre o identificación del equipo">
+                </div>
+                <div class="input-group span-2">
+                    <label>Objetivo del Servicio</label>
+                    <input type="text" name="desc_objetivo" placeholder="Propósito principal de la intervención">
+                </div>
+                <div class="input-group span-2">
+                    <label>Descripción Detallada</label>
+                    <textarea name="desc_detallada" rows="4" placeholder="Describa ampliamente los trabajos a realizar..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. ACTIVIDADES EJECUTADAS -->
+        <section class="doc-section">
+            <div class="section-header">
+                <h2 class="section-title">5. Actividades Ejecutadas</h2>
+                <button type="button" class="btn btn-sm btn-outline no-print" onclick="app.addActivityRow()">+ Agregar Actividad</button>
+            </div>
+            <div class="table-responsive">
+                <table class="dynamic-table" id="activitiesTable">
+                    <thead>
+                        <tr>
+                            <th width="5%">N°</th>
+                            <th width="40%">Actividad Ejecutada</th>
+                            <th width="20%">Responsable</th>
+                            <th width="10%">Hora Inicio</th>
+                            <th width="10%">Hora Fin</th>
+                            <th width="10%">Duración</th>
+                            <th width="5%" class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows dynamically generated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 6. MATERIALES, REPUESTOS Y HERRAMIENTAS -->
+        <section class="doc-section">
+            <div class="section-header">
+                <h2 class="section-title">6. Materiales, Repuestos y Herramientas Utilizadas</h2>
+                <button type="button" class="btn btn-sm btn-outline no-print" onclick="app.addMaterialRow()">+ Agregar Ítem</button>
+            </div>
+            <div class="table-responsive">
+                <table class="dynamic-table" id="materialsTable">
+                    <thead>
+                        <tr>
+                            <th width="5%">N°</th>
+                            <th width="35%">Descripción</th>
+                            <th width="10%">Cantidad</th>
+                            <th width="15%">Unidad</th>
+                            <th width="30%">Especificación Técnica</th>
+                            <th width="5%" class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows dynamically generated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 7. DESARROLLO DEL SERVICIO -->
+        <section class="doc-section">
+            <h2 class="section-title">7. Desarrollo del Servicio</h2>
+            
+            <h3 class="subsection-title">Tabla de Activos y Estado</h3>
+            <div class="table-responsive mb-4">
+                <table class="dynamic-table" id="assetsTable">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Código GIM</th>
+                            <th>Tipo Equipo</th>
+                            <th>Área/Ubicación</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Serie</th>
+                            <th>Capacidad</th>
+                            <th>Condición</th>
+                            <th class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Default row generated by js -->
+                    </tbody>
+                </table>
+                <div class="mt-2 text-right no-print">
+                    <button type="button" class="btn btn-sm btn-outline" onclick="app.addAssetRow()">+ Agregar Activo</button>
+                </div>
+            </div>
+
+            <div class="logbook-container">
+                <div class="logbook-section">
+                    <h4 class="logbook-title">7.1 Situación Inicial (Antes)</h4>
+                    <textarea name="dev_antes" rows="4" placeholder="Condiciones encontradas, Fallas detectadas, Riesgos identificados y Preparación previa."></textarea>
+                </div>
+                <div class="logbook-section">
+                    <h4 class="logbook-title">7.2 Ejecución del Servicio (Durante)</h4>
+                    <textarea name="dev_durante" rows="4" placeholder="Procedimiento aplicado, Pruebas realizadas, Ajustes efectuados, Incidencias y Acciones correctivas."></textarea>
+                </div>
+                <div class="logbook-section">
+                    <h4 class="logbook-title">7.3 Resultado Final (Después)</h4>
+                    <textarea name="dev_despues" rows="4" placeholder="Condición final, Validaciones, Pruebas de funcionamiento y Entregables."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. EVIDENCIA FOTOGRÁFICA -->
+        <section class="doc-section page-break-before">
+            <div class="section-header">
+                <h2 class="section-title">8. Evidencia Fotográfica</h2>
+                <button type="button" class="btn btn-sm btn-outline no-print" onclick="app.addPhotoCard()">+ Agregar Foto</button>
+            </div>
+            <div class="photo-grid" id="dynamicPhotoGrid">
+                <!-- Las tarjetas de fotos se insertarán aquí dinámicamente -->
+            </div>
+        </section>
+
+        <!-- 9. OBSERVACIONES -->
+        <section class="doc-section">
+            <div class="section-header">
+                <h2 class="section-title">9. Observaciones</h2>
+                <button type="button" class="btn btn-sm btn-outline no-print" onclick="app.addObservationRow()">+ Agregar Observación</button>
+            </div>
+            <div class="table-responsive">
+                <table class="dynamic-table" id="observationsTable">
+                    <thead>
+                        <tr>
+                            <th width="15%">Prioridad</th>
+                            <th width="40%">Observación</th>
+                            <th width="40%">Acción Recomendada</th>
+                            <th width="5%" class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows dynamically generated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 10 Y 11. RECOMENDACIONES Y CONCLUSIONES -->
+        <section class="doc-section">
+            <div class="grid-container grid-2">
+                <div class="input-group">
+                    <h2 class="section-title">10. Recomendaciones</h2>
+                    <textarea name="recomendaciones" rows="6" placeholder="- Escriba las recomendaciones en formato de viñetas..."></textarea>
+                </div>
+                <div class="input-group">
+                    <h2 class="section-title">11. Conclusiones</h2>
+                    <textarea name="conclusiones" rows="6" placeholder="- Resuma los logros y confirmación de objetivos..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 12. ACREDITACIÓN DEL SERVICIO -->
+        <section class="doc-section">
+            <h2 class="section-title">12. Acreditación del Servicio</h2>
+            <div class="accreditation-grid">
+                <div class="acc-details">
+                    <div class="input-group">
+                        <label>Empresa (Proveedor)</label>
+                        <input type="text" name="acc_empresa" placeholder="Nombre proveedor">
+                    </div>
+                    <div class="input-group">
+                        <label>Nombre del Responsable</label>
+                        <input type="text" name="acc_nombre" placeholder="Firma autorizada">
+                    </div>
+                    <div class="input-group">
+                        <label>Cargo</label>
+                        <input type="text" name="acc_cargo" placeholder="Cargo del responsable">
+                    </div>
+                    <div class="input-group">
+                        <label>Fecha de Firma</label>
+                        <input type="date" name="acc_fecha">
+                    </div>
+                </div>
+                <div class="acc-signature">
+                    <label>Firma / Sello</label>
+                    <div class="signature-box" id="signatureArea" onclick="document.getElementById('signatureInput').click()">
+                        <span class="upload-icon no-print">Click para adjuntar firma (PNG/JPG)</span>
+                        <img id="signaturePreview" class="photo-preview" src="" alt="Firma" style="display:none;">
+                    </div>
+                    <input type="file" id="signatureInput" accept="image/*" class="no-print hidden-input" onchange="app.handleImageUpload(event, 'signature')">
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER LEGAL -->
+        <footer class="legal-footer">
+            <p><strong>ADVERTENCIA LEGAL:</strong> Este documento es de carácter oficial. Su falsificación o alteración está sancionada conforme a ley.</p>
+        </footer>
+
+    </form>
+
+    <script src="app.js"></script>
+</body>
+</html>
